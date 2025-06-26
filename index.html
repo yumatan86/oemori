@@ -1,9 +1,8 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>おえかきの森 お題フィルター</title>
+  <title>おえかきの森 お題フィルター（リアルタイム）</title>
   <style>
     body { font-family: sans-serif; padding: 1em; background: #f9f9f9; }
     table { border-collapse: collapse; width: 100%; margin-top: 1em; }
@@ -11,10 +10,54 @@
     th { background: #eee; }
     a { color: #0077cc; text-decoration: none; }
     a:hover { text-decoration: underline; }
+    label { margin-right: 10px; }
+    select, input { margin-right: 1em; }
+    /* 難易度色 */
+    .level-やさしい { background-color: #ffd6e8; }
+    .level-やさしい協力 { background-color: #ffadd0; }
+    .level-ふつう { background-color: #ccf2cc; }
+    .level-ふつう協力 { background-color: #99e699; }
+    .level-むずかしい { background-color: #cce0ff; }
+    .level-むずかしい協力 { background-color: #99bbff; }
+    /* レスポンシブ対応 */
+    @media (max-width: 600px) {
+      table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+      body {
+        padding: 0.5em;
+        font-size: 14px;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>おえかきの森 お題フィルター</h1>
+  <h1>おえかきの森 お題フィルター（リアルタイム）</h1>
+
+  <div>
+    <label>難易度:
+      <select id="levelFilter">
+        <option value="">すべて</option>
+        <option value="やさしい">やさしい</option>
+        <option value="やさしい協力">やさしい協力</option>
+        <option value="ふつう">ふつう</option>
+        <option value="ふつう協力">ふつう協力</option>
+        <option value="むずかしい">むずかしい</option>
+        <option value="むずかしい協力">むずかしい協力</option>
+      </select>
+    </label>
+
+    <label>文字数:
+      <input type="number" id="lengthFilter" min="1" placeholder="例: 3" />
+    </label>
+
+    <label>頭文字:
+      <input type="text" id="firstCharFilter" maxlength="1" placeholder="例: あ" />
+    </label>
+  </div>
+
   <table id="wordTable" style="display:none;">
     <thead>
       <tr>
@@ -25,33 +68,77 @@
   </table>
 
   <script>
-    fetch('oekaki_words.csv')
-      .then(res => res.text())
-      .then(text => {
-        const lines = text.trim().split('\n');
-        const headers = lines[0].split(',');
-        const data = lines.slice(1).map(line => {
-          const values = line.split(',');
-          let obj = {};
-          headers.forEach((h, i) => obj[h] = values[i]?.trim() || '');
-          return obj;
-        });
+    let allData = [];
 
-        const tbody = document.querySelector('#wordTable tbody');
-        data.forEach(row => {
-          const alt = Object.keys(row).filter(k => k.startsWith('別解')).map(k => row[k]).filter(Boolean).join(', ');
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${row['難易度']}</td>
-            <td><a href="detail.html?word=${encodeURIComponent(row['お題'])}">${row['お題']}</a></td>
-            <td>${row['ひらがな']}</td>
-            <td>${alt}</td>
-          `;
-          tbody.appendChild(tr);
+    function toClassName(str) {
+      return str.replace(/[\s　]/g, '').replace(/[^a-zA-Z0-9\-]/g, '');
+    }
+
+    function fetchCSV(url) {
+      return fetch(url)
+        .then(res => res.text())
+        .then(text => {
+          const lines = text.trim().split('\n');
+          const headers = lines[0].split(',');
+          return lines.slice(1).map(line => {
+            const values = line.split(',');
+            let obj = {};
+            headers.forEach((h, i) => obj[h] = values[i]?.trim() || '');
+            return obj;
+          });
         });
-        document.getElementById('wordTable').style.display = 'table';
+    }
+
+    function renderTable(filtered) {
+      const tbody = document.querySelector('#wordTable tbody');
+      tbody.innerHTML = '';
+      filtered.forEach(row => {
+        const altAnswersCount = Object.keys(row)
+          .filter(key => key.startsWith('別解'))
+          .map(key => row[key])
+          .filter(Boolean).length;
+
+        const levelClass = 'level-' + toClassName(row['難易度']);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="${levelClass}">${row['難易度']}</td>
+          <td><a href="detail.html?word=${encodeURIComponent(row['お題'])}">${row['お題']}</a></td>
+          <td>${row['ひらがな']}</td>
+          <td>${altAnswersCount}件</td>`;
+        tbody.appendChild(tr);
+      });
+      document.getElementById('wordTable').style.display = filtered.length ? 'table' : 'none';
+    }
+
+    function applyFilters() {
+      const level = document.getElementById('levelFilter').value;
+      const length = parseInt(document.getElementById('lengthFilter').value);
+      const firstChar = document.getElementById('firstCharFilter').value;
+
+      const filtered = allData.filter(row => {
+        if (level && row['難易度'] !== level) return false;
+        if (!isNaN(length) && row['ひらがな'].length !== length) return false;
+        if (firstChar && !row['ひらがな'].startsWith(firstChar)) return false;
+        return true;
+      });
+
+      renderTable(filtered);
+    }
+
+    // リアルタイム反映のためイベント登録
+    ['levelFilter', 'lengthFilter', 'firstCharFilter'].forEach(id => {
+      document.getElementById(id).addEventListener('input', applyFilters);
+    });
+
+    fetchCSV('oekaki_words.csv')
+      .then(data => {
+        allData = data;
+        renderTable(data);
+      })
+      .catch(err => {
+        alert('CSVの読み込みに失敗しました🥲');
+        console.error(err);
       });
   </script>
 </body>
 </html>
-
