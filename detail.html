@@ -40,6 +40,21 @@
       color: #555;
     }
 
+    .level-label {
+      display: inline-block;
+      padding: 0.3em 0.8em;
+      border-radius: 999px;
+      font-size: 0.9em;
+      color: #333;
+    }
+
+    .level-やさしい           { background-color: #ffd6e8; }
+    .level-やさしい協力       { background-color: #ffadd0; }
+    .level-ふつう             { background-color: #ccf2cc; }
+    .level-ふつう協力         { background-color: #99e699; }
+    .level-むずかしい         { background-color: #cce0ff; }
+    .level-むずかしい協力     { background-color: #99bbff; }
+
     .tags {
       display: flex;
       flex-wrap: wrap;
@@ -77,9 +92,14 @@
 </head>
 <body>
   <div class="container" id="content">読み込み中…</div>
+
   <script>
     function getParam(name) {
       return new URLSearchParams(location.search).get(name);
+    }
+
+    function toLevelClass(level) {
+      return 'level-' + level.replace(/[\s　]/g, '');
     }
 
     const targetWord = getParam('word');
@@ -108,13 +128,19 @@
           .map(k => match[k])
           .filter(Boolean);
 
+        const levelClass = toLevelClass(match['難易度']);
+
         display.innerHTML = `
           <a class="back" href="index.html">← 一覧に戻る</a>
           <h1>${match['お題']}</h1>
           <div class="info"><strong>読み：</strong>${match['ひらがな']}</div>
-          <div class="info"><strong>難易度：</strong>${match['難易度']}</div>
+          <div class="info"><strong>難易度：</strong>
+            <span class="level-label ${levelClass}">${match['難易度']}</span>
+          </div>
           <div class="info"><strong>別解：</strong></div>
-          <div class="tags">${alt.length > 0 ? alt.map(a => `<span class="tag">${a}</span>`).join('') : '<em>（なし）</em>'}</div>
+          <div class="tags">
+            ${alt.length > 0 ? alt.map(a => `<span class="tag">${a}</span>`).join('') : '<em>（なし）</em>'}
+          </div>
         `;
       });
   </script>
