@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>おえかきの森 お題フィルター</title>
+  <style>
+    body { font-family: sans-serif; padding: 1em; background: #f9f9f9; }
+    table { border-collapse: collapse; width: 100%; margin-top: 1em; }
+    th, td { border: 1px solid #ccc; padding: 6px 10px; text-align: left; }
+    th { background: #eee; }
+    label { margin-right: 10px; }
+    select, input { margin-right: 1em; }
+  </style>
+</head>
+<body>
+  <h1>おえかきの森 お題フィルター</h1>
+
+  <div>
+    <label>難易度:
+      <select id="levelFilter">
+        <option value="">すべて</option>
+        <option value="やさしい">やさしい</option>
+        <option value="やさしい協力">やさしい協力</option>
+        <option value="ふつう">ふつう</option>
+        <option value="ふつう協力">ふつう協力</option>
+        <option value="むずかしい">むずかしい</option>
+        <option value="むずかしい協力">むずかしい協力</option>
+      </select>
+    </label>
+
+    <label>文字数:
+      <input type="number" id="lengthFilter" min="1" placeholder="例: 3" />
+    </label>
+
+    <label>頭文字:
+      <input type="text" id="firstCharFilter" maxlength="1" placeholder="例: あ" />
+    </label>
+
+    <button id="filterBtn">絞り込み</button>
+  </div>
+
+  <table id="wordTable" style="display:none;">
+    <thead>
+      <tr>
+        <th>難易度</th><th>お題</th><th>ひらがな</th><th>別解</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    let allData = [];
+
+    function fetchCSV(url) {
+      return fetch(url)
+        .then(res => res.text())
+        .then(text => {
+          const lines = text.split('\n').filter(line => line.trim() !== '');
+          const headers = lines[0].split(',').map(h => h.trim());
+          return lines.slice(1).map(line => {
+            const cols = line.split(',');
+            let obj = {};
+            headers.forEach((h, i) => obj[h] = cols[i] ? cols[i].trim() : '');
+            return obj;
+          });
+        });
+    }
+
+    function renderTable(filtered) {
+      const tbody = document.querySelector('#wordTable tbody');
+      tbody.innerHTML = '';
+      filtered.forEach(row => {
+        const altAnswers = Object.keys(row)
+          .filter(key => key.includes('別解'))
+          .map(key => row[key])
+          .filter(Boolean)
+          .join(', ');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row['難易度']}</td>
+          <td>${row['お題']}</td>
+          <td>${row['ひらがな']}</td>
+          <td>${altAnswers}</td>`;
+        tbody.appendChild(tr);
+      });
+      document.getElementById('wordTable').style.display = filtered.length ? 'table' : 'none';
+    }
+
+    function applyFilters() {
+      const level = document.getElementById('levelFilter').value;
+      const length = parseInt(document.getElementById('lengthFilter').value);
+      const firstChar = document.getElementById('firstCharFilter').value;
+
+      const filtered = allData.filter(row => {
+        if (level && row['難易度'] !== level) return false;
+        if (!isNaN(length) && row['ひらがな'].length !== length) return false;
+        if (firstChar && !row['ひらがな'].startsWith(firstChar)) return false;
+        return true;
+      });
+
+      renderTable(filtered);
+    }
+
+    document.getElementById('filterBtn').addEventListener('click', applyFilters);
+
+    // ▼ GitHub Pagesと同階層のCSVファイルを自動で読み込む ▼
+    fetchCSV('oekaki_words.csv')
+      .then(data => {
+        allData = data;
+        renderTable(data);
+      })
+      .catch(err => {
+        alert('CSVの読み込みに失敗しました。\nファイルが正しい場所にあるか確認してね！');
+        console.error(err);
+      });
+  </script>
+</body>
+</html>
