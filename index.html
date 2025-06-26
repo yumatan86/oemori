@@ -12,6 +12,7 @@
     a:hover { text-decoration: underline; }
     label { margin-right: 10px; }
     select, input { margin-right: 1em; }
+
     /* 難易度色 */
     .level-やさしい { background-color: #ffd6e8; }
     .level-やさしい協力 { background-color: #ffadd0; }
@@ -19,6 +20,7 @@
     .level-ふつう協力 { background-color: #99e699; }
     .level-むずかしい { background-color: #cce0ff; }
     .level-むずかしい協力 { background-color: #99bbff; }
+
     /* レスポンシブ対応 */
     @media (max-width: 600px) {
       table {
@@ -70,8 +72,9 @@
   <script>
     let allData = [];
 
+    // 日本語に対応したクラス名変換
     function toClassName(str) {
-      return str.replace(/[\s　]/g, '').replace(/[^a-zA-Z0-9\-]/g, '');
+      return str.replace(/[\s　]/g, '');  // 空白だけ除去
     }
 
     function fetchCSV(url) {
@@ -125,7 +128,7 @@
       renderTable(filtered);
     }
 
-    // リアルタイム反映のためイベント登録
+    // イベント登録（リアルタイム反映）
     ['levelFilter', 'lengthFilter', 'firstCharFilter'].forEach(id => {
       document.getElementById(id).addEventListener('input', applyFilters);
     });
