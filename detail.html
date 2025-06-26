@@ -1,0 +1,57 @@
+<!-- detail.html -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>お題の詳細</title>
+  <style>
+    body { font-family: sans-serif; padding: 2em; background: #f9f9f9; }
+    h1 { font-size: 1.5em; }
+    ul { list-style: disc; padding-left: 1.5em; }
+    a { text-decoration: none; color: #0077cc; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div id="content">読み込み中…</div>
+  <p><a href="index.html">← 一覧に戻る</a></p>
+
+  <script>
+    function getParam(name) {
+      return new URLSearchParams(location.search).get(name);
+    }
+
+    const targetWord = getParam('word');
+    const display = document.getElementById('content');
+
+    fetch('oekaki_words.csv')
+      .then(res => res.text())
+      .then(text => {
+        const lines = text.trim().split('\n');
+        const headers = lines[0].split(',');
+        const data = lines.slice(1).map(line => {
+          const values = line.split(',');
+          let obj = {};
+          headers.forEach((h, i) => obj[h] = values[i]?.trim() || '');
+          return obj;
+        });
+
+        const match = data.find(row => row['お題'] === targetWord);
+        if (!match) {
+          display.innerHTML = `<p>お題「${targetWord}」が見つかりませんでした。</p>`;
+          return;
+        }
+
+        const alt = Object.keys(match).filter(k => k.startsWith('別解')).map(k => match[k]).filter(Boolean);
+
+        display.innerHTML = `
+          <h1>${match['お題']}</h1>
+          <p><strong>読み：</strong>${match['ひらがな']}</p>
+          <p><strong>難易度：</strong>${match['難易度']}</p>
+          <p><strong>別解：</strong></p>
+          <ul>${alt.map(a => `<li>${a}</li>`).join('')}</ul>
+        `;
+      });
+  </script>
+</body>
+</html>
