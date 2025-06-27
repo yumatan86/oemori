@@ -86,6 +86,29 @@
       white-space: nowrap;
     }
 
+    .link-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5em;
+      margin: 1em 0;
+      justify-content: center;
+    }
+
+    .search-btn {
+      background-color: #0077cc;
+      color: white;
+      padding: 0.5em 0.9em;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: background 0.2s;
+      font-size: 0.95em;
+    }
+
+    .search-btn:hover {
+      background-color: #005fa3;
+    }
+
     .back {
       display: block;
       text-align: center;
@@ -109,7 +132,6 @@
       font-size: 1.3em;
     }
 
-    /* レスポンシブ対応 */
     @media (max-width: 480px) {
       body {
         padding: 1em;
@@ -191,6 +213,13 @@
           <div class="info"><strong>難易度：</strong>
             <span class="level-label ${levelClass}">${match['難易度']}</span>
           </div>
+
+          <div class="link-buttons">
+            <a class="search-btn" href="https://www.google.com/search?tbm=isch&q=${encodeURIComponent(match['お題'])}" target="_blank" rel="noopener noreferrer">🔍 Google画像</a>
+            <a class="search-btn" href="https://ja.wikipedia.org/wiki/${encodeURIComponent(match['お題'].replace(/ /g, '_'))}" target="_blank" rel="noopener noreferrer">📘 Wikipedia</a>
+            <a class="search-btn" href="https://www.irasutoya.com/search?q=${encodeURIComponent(match['お題'])}" target="_blank" rel="noopener noreferrer">🎨 いらすとや</a>
+          </div>
+
           <div class="info"><strong>別解：</strong>
             <div class="tags">
               ${alt.length > 0 ? alt.map(a => `<span class="tag">${a}</span>`).join('') : '<em>（なし）</em>'}
