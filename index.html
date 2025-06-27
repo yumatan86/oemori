@@ -58,6 +58,10 @@
     <label>頭文字:
       <input type="text" id="firstCharFilter" maxlength="1" placeholder="例: あ" />
     </label>
+
+    <label>検索:
+      <input type="text" id="keywordFilter" placeholder="お題や読みを入力" />
+    </label>
   </div>
 
   <table id="wordTable" style="display:none;">
@@ -72,9 +76,8 @@
   <script>
     let allData = [];
 
-    // 日本語に対応したクラス名変換
     function toClassName(str) {
-      return str.replace(/[\s　]/g, '');  // 空白だけ除去
+      return str.replace(/[\s　]/g, '');
     }
 
     function fetchCSV(url) {
@@ -117,19 +120,24 @@
       const level = document.getElementById('levelFilter').value;
       const length = parseInt(document.getElementById('lengthFilter').value);
       const firstChar = document.getElementById('firstCharFilter').value;
+      const keyword = document.getElementById('keywordFilter').value.toLowerCase();
 
       const filtered = allData.filter(row => {
         if (level && row['難易度'] !== level) return false;
         if (!isNaN(length) && row['ひらがな'].length !== length) return false;
         if (firstChar && !row['ひらがな'].startsWith(firstChar)) return false;
+        if (keyword && !(
+          row['お題'].toLowerCase().includes(keyword) ||
+          row['ひらがな'].toLowerCase().includes(keyword)
+        )) return false;
         return true;
       });
 
       renderTable(filtered);
     }
 
-    // イベント登録（リアルタイム反映）
-    ['levelFilter', 'lengthFilter', 'firstCharFilter'].forEach(id => {
+    // 入力イベントに反応
+    ['levelFilter', 'lengthFilter', 'firstCharFilter', 'keywordFilter'].forEach(id => {
       document.getElementById(id).addEventListener('input', applyFilters);
     });
 
