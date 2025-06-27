@@ -12,12 +12,14 @@
       max-width: 1000px;
       margin: auto;
     }
+
     h1 {
-      font-size: 1.8em;
-      margin-bottom: 0.5em;
+      font-size: 2em;
+      margin-bottom: 1em;
       text-align: center;
       color: #444;
     }
+
     .filters {
       display: flex;
       flex-wrap: wrap;
@@ -25,41 +27,73 @@
       justify-content: center;
       margin-bottom: 1.5em;
     }
+
     .filters label {
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
       font-size: 0.95em;
     }
+
     input[type="text"],
     input[type="number"],
     select {
-      padding: 4px 8px;
+      padding: 5px 10px;
       border-radius: 6px;
       border: 1px solid #ccc;
     }
+
     input[type="checkbox"] {
-      margin-right: 0.3em;
+      transform: scale(1.2);
     }
+
     table {
       border-collapse: collapse;
       width: 100%;
       background: white;
       border-radius: 8px;
       overflow: hidden;
+      box-shadow: 0 0 8px rgba(0,0,0,0.05);
     }
+
     th, td {
-      border: 1px solid #ddd;
-      padding: 8px 12px;
+      border: 1px solid #eee;
+      padding: 10px 12px;
       text-align: left;
     }
+
     th {
-      background-color: #f0f0f0;
+      background-color: #f3f3f3;
     }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    tr:hover {
+      background-color: #f0f8ff;
+    }
+
     a {
-      color: #0066cc;
+      color: #007acc;
       text-decoration: none;
+      font-weight: bold;
     }
+
     a:hover {
       text-decoration: underline;
     }
+
+    .badge {
+      background: #e0e0e0;
+      border-radius: 999px;
+      padding: 2px 10px;
+      font-size: 0.85em;
+      display: inline-block;
+      color: #555;
+    }
+
+    /* 難易度色 */
     .level-やさしい { background-color: #ffd6e8; }
     .level-やさしい協力 { background-color: #ffadd0; }
     .level-ふつう { background-color: #ccf2cc; }
@@ -94,14 +128,8 @@
       </select>
     </label>
 
-    <label>
-      <input type="checkbox" id="normalMode" checked />
-      通常モード
-    </label>
-    <label>
-      <input type="checkbox" id="coopMode" checked />
-      協力モード
-    </label>
+    <label><input type="checkbox" id="normalMode" checked />通常モード</label>
+    <label><input type="checkbox" id="coopMode" checked />協力モード</label>
 
     <label>文字数:
       <input type="number" id="lengthFilter" min="1" placeholder="例: 3" />
@@ -132,8 +160,8 @@
       return str.replace(/[\s　]/g, '');
     }
 
-    function fetchCSV(url) {
-      return fetch('oekaki_words.csv')
+    function fetchCSV(url = 'oekaki_words.csv') {
+      return fetch(url)
         .then(res => res.text())
         .then(text => {
           const lines = text.trim().split('\n');
@@ -151,9 +179,9 @@
       const tbody = document.querySelector('#wordTable tbody');
       tbody.innerHTML = '';
       filtered.forEach(row => {
-        const altAnswersCount = Object.keys(row)
-          .filter(key => key.startsWith('別解'))
-          .map(key => row[key])
+        const altCount = Object.keys(row)
+          .filter(k => k.startsWith('別解'))
+          .map(k => row[k])
           .filter(Boolean).length;
 
         const levelClass = 'level-' + toClassName(row['難易度']);
@@ -162,9 +190,10 @@
           <td class="${levelClass}">${row['難易度']}</td>
           <td><a href="detail.html?word=${encodeURIComponent(row['お題'])}">${row['お題']}</a></td>
           <td>${row['ひらがな']}</td>
-          <td>${altAnswersCount}件</td>`;
+          <td><span class="badge">${altCount}件</span></td>`;
         tbody.appendChild(tr);
       });
+
       document.getElementById('wordTable').style.display = filtered.length ? 'table' : 'none';
     }
 
@@ -210,4 +239,3 @@
   </script>
 </body>
 </html>
-
