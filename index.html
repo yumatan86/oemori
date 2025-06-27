@@ -2,18 +2,64 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>おえかきの森 お題フィルター（リアルタイム）</title>
+  <title>おえかきの森 お題フィルター</title>
   <style>
-    body { font-family: sans-serif; padding: 1em; background: #f9f9f9; }
-    table { border-collapse: collapse; width: 100%; margin-top: 1em; }
-    th, td { border: 1px solid #ccc; padding: 6px 10px; text-align: left; }
-    th { background: #eee; }
-    a { color: #0077cc; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    label { margin-right: 10px; }
-    select, input { margin-right: 1em; }
-
-    /* 難易度色 */
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #fdfdfd;
+      color: #333;
+      padding: 2em;
+      max-width: 1000px;
+      margin: auto;
+    }
+    h1 {
+      font-size: 1.8em;
+      margin-bottom: 0.5em;
+      text-align: center;
+      color: #444;
+    }
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1em;
+      justify-content: center;
+      margin-bottom: 1.5em;
+    }
+    .filters label {
+      font-size: 0.95em;
+    }
+    input[type="text"],
+    input[type="number"],
+    select {
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    input[type="checkbox"] {
+      margin-right: 0.3em;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px 12px;
+      text-align: left;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
+    a {
+      color: #0066cc;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
     .level-やさしい { background-color: #ffd6e8; }
     .level-やさしい協力 { background-color: #ffadd0; }
     .level-ふつう { background-color: #ccf2cc; }
@@ -21,24 +67,21 @@
     .level-むずかしい { background-color: #cce0ff; }
     .level-むずかしい協力 { background-color: #99bbff; }
 
-    /* レスポンシブ対応 */
     @media (max-width: 600px) {
-      table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
-      }
       body {
-        padding: 0.5em;
-        font-size: 14px;
+        padding: 1em;
+      }
+      .filters {
+        flex-direction: column;
+        align-items: flex-start;
       }
     }
   </style>
 </head>
 <body>
-  <h1>おえかきの森 お題フィルター（リアルタイム）</h1>
+  <h1>おえかきの森 お題フィルター</h1>
 
-  <div>
+  <div class="filters">
     <label>難易度:
       <select id="levelFilter">
         <option value="">すべて</option>
@@ -49,6 +92,15 @@
         <option value="むずかしい">むずかしい</option>
         <option value="むずかしい協力">むずかしい協力</option>
       </select>
+    </label>
+
+    <label>
+      <input type="checkbox" id="normalMode" checked />
+      通常モード
+    </label>
+    <label>
+      <input type="checkbox" id="coopMode" checked />
+      協力モード
     </label>
 
     <label>文字数:
@@ -81,7 +133,7 @@
     }
 
     function fetchCSV(url) {
-      return fetch(url)
+      return fetch('oekaki_words.csv')
         .then(res => res.text())
         .then(text => {
           const lines = text.trim().split('\n');
@@ -121,6 +173,8 @@
       const length = parseInt(document.getElementById('lengthFilter').value);
       const firstChar = document.getElementById('firstCharFilter').value;
       const keyword = document.getElementById('keywordFilter').value.toLowerCase();
+      const normalMode = document.getElementById('normalMode').checked;
+      const coopMode = document.getElementById('coopMode').checked;
 
       const filtered = allData.filter(row => {
         if (level && row['難易度'] !== level) return false;
@@ -130,18 +184,21 @@
           row['お題'].toLowerCase().includes(keyword) ||
           row['ひらがな'].toLowerCase().includes(keyword)
         )) return false;
+
+        const isCoop = row['難易度'].includes('協力');
+        if ((!coopMode && isCoop) || (!normalMode && !isCoop)) return false;
+
         return true;
       });
 
       renderTable(filtered);
     }
 
-    // 入力イベントに反応
-    ['levelFilter', 'lengthFilter', 'firstCharFilter', 'keywordFilter'].forEach(id => {
+    ['levelFilter', 'lengthFilter', 'firstCharFilter', 'keywordFilter', 'normalMode', 'coopMode'].forEach(id => {
       document.getElementById(id).addEventListener('input', applyFilters);
     });
 
-    fetchCSV('oekaki_words.csv')
+    fetchCSV()
       .then(data => {
         allData = data;
         renderTable(data);
@@ -153,3 +210,4 @@
   </script>
 </body>
 </html>
+
